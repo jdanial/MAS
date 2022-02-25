@@ -1,4 +1,4 @@
-# SAS
+# MAS
 MAS is the Molecularity Analysis Software. This software was developed for high order molecular counting of nanoscopic complexes with single molecule accuracy from images acquired using confocal, or wide-field, diffraction-limited microscopy. 
 ## Installation
 To install MAS, you will need to install MATLAB 2020a or higher. This version of MATLAB can be downloaded from [here](https://www.mathworks.com/products/matlab.html). Once installed, the following four packages must be installed: signal processing and communications; machine learning and deep learning; maths, statistics and optimization; image processing and computer vision.  
