@@ -21,14 +21,14 @@ end
 
 %% checking availability of calibration and unknown data
 cd(fullfile(app.param.paths.calibrationAndUnknownData,'Calibration'));
-dataFileList = dir('*.lsm');
+dataFileList = [dir('*.lsm'); dir('*.tif')];
 if isempty(dataFileList)
     returnFlag = true;
     app.msgBox.Value = sprintf('%s','Error: no calibration data in selected patb.');
     return;
 end
 cd(fullfile(app.param.paths.calibrationAndUnknownData,'Unknown'));
-dataFileList = dir('*.lsm');
+dataFileList = [dir('*.lsm'); dir('*.tif')];
 if isempty(dataFileList)
     returnFlag = true;
     app.msgBox.Value = sprintf('%s','Error: no unknown data in selected patb.');
@@ -50,7 +50,7 @@ for roundId = 1 : 2
     else
         cd(fullfile(app.param.paths.calibrationAndUnknownData,'Unknown'));
     end
-    inputFiles = dir('*.lsm');
+    inputFiles = [dir('*.lsm'); dir('*.tif')];
 
     %% reading number of files
     numFiles = numel(inputFiles);
@@ -84,6 +84,8 @@ for roundId = 1 : 2
             [~,~,ext] = fileparts(app.data.file(fileId).name);
             if ext == ".lsm"
                 image = lsmread(filePath);
+            else
+                image(1,1,1,:,:) = imread(filePath);
             end
         catch
             returnFlag = true;
@@ -108,20 +110,17 @@ for roundId = 1 : 2
         %% calling ParticleDetector
         ParticleDetector(app,fileId);
 
-        if app.param.detection.localize
+        %% setting up progress
+        app.msgBox.Value = sprintf('%s',['Localizing particles in ' app.data.file(fileId).type ' file ' num2str(fileId) '.']);
+        drawnow;
 
-            %% setting up progress
-            app.msgBox.Value = sprintf('%s',['Localizing particles in ' app.data.file(fileId).type ' file ' num2str(fileId) '.']);
-            drawnow;
+        ParticleLocalizer(app,fileId);
 
-            ParticleLocalizer(app,fileId);
+        %% setting up progress
+        app.msgBox.Value = sprintf('%s',['Rejecting particles in ' app.data.file(fileId).type ' file ' num2str(fileId) '.']);
+        drawnow;
 
-            %% setting up progress
-            app.msgBox.Value = sprintf('%s',['Rejecting particles in ' app.data.file(fileId).type ' file ' num2str(fileId) '.']);
-            drawnow;
-
-            ParticleRejector(app,fileId);
-        end
+        ParticleRejector(app,fileId);
     end
 
     %% exporting generic .m files
@@ -211,26 +210,6 @@ for tId = 1 : size(app.data.file(fileId).image,1)
                 app.data.file(fileId).time(tId).particle(trueParticlePosCount).state = 'accepted';
                 app.data.file(fileId).time(tId).particle(trueParticlePosCount).centroid.x = centroids(particleId,1);
                 app.data.file(fileId).time(tId).particle(trueParticlePosCount).centroid.y = centroids(particleId,2);
-                background = [];
-                for rowId = round(centroids(particleId,2)) - roiRadius - 1 : round(centroids(particleId,2)) + roiRadius + 1
-                    for colId = round(centroids(particleId,1)) - roiRadius - 1 : round(centroids(particleId,1)) + roiRadius + 1
-                        if (rowId < round(centroids(particleId,2)) - roiRadius || rowId > round(centroids(particleId,2)) + roiRadius) && ...
-                                (colId < round(centroids(particleId,1)) - roiRadius || colId > round(centroids(particleId,1)) + roiRadius)
-                            background = [background imageRaw(rowId,colId)];
-                        end
-                    end
-                end
-                app.data.file(fileId).time(tId).particle(trueParticlePosCount).background = ...
-                    ((((roiRadius * 2) + 1) .^ 2) .* mean(background));
-                app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity = sum(...
-                    imageRaw(round(centroids(particleId,2)) - roiRadius : round(centroids(particleId,2)) + roiRadius,...
-                    round(centroids(particleId,1)) - roiRadius : round(centroids(particleId,1)) + roiRadius),'all');
-                app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity = ...
-                    app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity - ...
-                    app.data.file(fileId).time(tId).particle(trueParticlePosCount).background;
-                if app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity < 0
-                    app.data.file(fileId).time(tId).particle(trueParticlePosCount).state = 'rejected';
-                end
             end
         end
 
@@ -250,7 +229,8 @@ for tId = 1 : size(app.data.file(fileId).image,1)
                         maxParticleIntensity = particleIntensityZId;
                     end
                 end
-                if ~(maxParticleIntensityZId > 1 && maxParticleIntensityZId < size(app.data.file(fileId).image,3))
+                if ~(maxParticleIntensityZId > 1 && maxParticleIntensityZId < size(app.data.file(fileId).image,3)) && ...
+                        size(app.data.file(fileId).image,3) ~= 1
                     app.data.file(fileId).time(tId).particle(particleId).state = 'rejected';
                 end
             end

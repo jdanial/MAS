@@ -34,7 +34,6 @@ app.param = paramTemp.param;
 % listing parameters
 app.DetectSwitch.Value = app.param.detection.detect;
 app.MaximumSigmaEditField.Value = app.param.detection.maxSigma;
-app.LocalizeCheckBox.Value = app.param.detection.localize;
 app.ROIRadiusEditField.Value = app.param.detection.roiRadius;
 app.AnalyzeSwitch.Value = app.param.analysis.analyze;
 app.NumSubUnitsPerCalibComplexEditField.Value = app.param.analysis.numSubUnitsPerCalibComplex;

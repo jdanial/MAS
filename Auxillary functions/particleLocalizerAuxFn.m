@@ -72,6 +72,7 @@ for tId = 1 : size(app.data.file(fileId).image,1)
 
                 % updating sigma
                 app.data.file(fileId).time(tId).particle(indices(particleId)).sigma = parameters(4,particleId);
+                app.data.file(fileId).time(tId).particle(indices(particleId)).intensity = parameters(1,particleId) - parameters(5,particleId);
             else
                 app.data.file(fileId).time(tId).particle(indices(particleId)).state = 'rejected';
             end

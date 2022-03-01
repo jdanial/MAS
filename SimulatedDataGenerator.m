@@ -1,115 +1,92 @@
-%% Data simulator
-%% Copyright 2020 John S H Danial
+%% Ground-truth data simulator for MAS
+%% Copyright 2022 John S H Danial
 %% Department of Chemistry, Univerity of Cambridge
 
 %% clears all variables and sets path - DO NOT EDIT
-clear vars;
+clear all;
 path = uigetdir;
 
-%% camera parameters - EDITABLE
-cameraPixelSize = 100;
-cameraFrameSize = 1024;
-cameraEMGain = 300;
-cameraOffset = 100;
-cameraQE = 95;
-cameraConversionFactor = 5.1;
-cameraExposureTime = 0.03;
-cameraDarkCurrent = 0.007 / (1 / cameraExposureTime);
-cameraReadOut = 1;
+%% camera parameters
+cameraFrameSize = 1000;
 
 %% sample parameters - EDITABLE
-stoichiometry = [48 0 40 0 32 0 24 0 16 0 8 0];
+stoichiometry = [500 500 500 500 500];
 numStructures = sum(stoichiometry);
-photonCount = 5;
-varPhotonCount = 0.2;
-lateralPrecision = 130;
+sampleType = 'Unknown';
+lateralPrecision = 0.7;
 
-%% movie parameters - EDITABLE
-numFrames = 500;
-numMovies = 10;
+%% calling FrameGenerator
+[frameCoorX,frameCoorY,intensity] = FrameGenerator(numStructures,stoichiometry,cameraFrameSize,sampleType);
 
-%% looping through movies
-for movieId = 1 : numMovies
-    
-    %% calling FrameGenerator
-    [frameCoorX,frameCoorY,bleachTime,intensity] = FrameGenerator(numStructures,stoichiometry,cameraFrameSize,cameraPixelSize,photonCount,varPhotonCount,numFrames);
-    
-    %% calling StructureGenerator
-    movie = MovieGenerator(frameCoorX,frameCoorY,bleachTime,intensity,lateralPrecision,cameraPixelSize,cameraFrameSize,cameraOffset,cameraQE,cameraEMGain,cameraConversionFactor,cameraDarkCurrent,cameraReadOut,numFrames);
+%% calling StructureGenerator
+rawImage = ImageGenerator(frameCoorX,frameCoorY,intensity,lateralPrecision,cameraFrameSize);
 
-    %% exporting movies
-    for frameId = 1 : numFrames
-        if frameId == 1
-            imwrite(uint16(movie(:,:,frameId)),fullfile(path,[num2str(movieId) '.tif']),'WriteMode','overwrite');
-        else
-            imwrite(uint16(movie(:,:,frameId)),fullfile(path,[num2str(movieId) '.tif']),'WriteMode','append');
-        end
-    end
-end
+%% exporting movies
+imwrite(uint16(rawImage),fullfile(path,'image.tif'),'WriteMode','overwrite');
 
 %%==========FrameGenerator===========%%
-function [frameCoorX,frameCoorY,bleachTime,intensity] = FrameGenerator(numStructures,stoichiometry,cameraFrameSize,cameraPixelSize,photonCount,varPhotonCount,numFrames)
+function [frameCoorX,frameCoorY,intensity] = FrameGenerator(numStructures,stoichiometry,cameraFrameSize,sampleType)
 
 % initializing
-globalCount = 1;
+photonCount = 2;
+varPhotonCount = 0;
+marginSize = 150;
 
 % calculating x and y coordinates of each structure
-ranTransx = (((6 + 1) * cameraPixelSize) + ((cameraFrameSize - 6) * cameraPixelSize - ((6 + 1) * cameraPixelSize)) * rand(1,numStructures));
-ranTransy = (((6 + 1) * cameraPixelSize) + ((cameraFrameSize - 6) * cameraPixelSize - ((6 + 1) * cameraPixelSize)) * rand(1,numStructures));
+frameCoorX = marginSize + ((cameraFrameSize - 2 * marginSize) * rand(1,numStructures));
+frameCoorY = marginSize + ((cameraFrameSize - 2 * marginSize) * rand(1,numStructures));
 
 % calculating number of units in each structure
 numUnits = [];
+multFactor = [];
 for unitId = 1 : length(stoichiometry)
-    numUnits = [numUnits unitId .* ones(1,stoichiometry(unitId) * numStructures / sum(stoichiometry))];
-end
-
-% looping through structures
-for structureId = 1 : numStructures
-    
-    % looping through units
-    for unitId = 1 : numUnits(structureId)
-        frameCoorX(globalCount) = ranTransx(structureId); 
-        frameCoorY(globalCount) = ranTransy(structureId);
-        globalCount = globalCount + 1;
+    numUnits = [numUnits unitId .* ones(1,stoichiometry(unitId))];
+    if strcmp(sampleType,'Unknown')
+        multFactor = [multFactor ((200 * (unitId - 1) + 100) / 30) * photonCount .* ones(1,stoichiometry(unitId))];
+    else
+        multFactor = [multFactor photonCount .* ones(1,stoichiometry(unitId))];
     end
 end
 
-% creating randing bleach times and intensities
-bleachTime = round(1 + (numFrames - 1) * rand(1,length(frameCoorX)));
-intensity = normrnd(double(photonCount),varPhotonCount * double(photonCount),1,length(frameCoorX));
+% creating random intensities
+intensity = multFactor .* normrnd(double(photonCount),varPhotonCount * double(photonCount),1,length(frameCoorX));
 end
 
-%%==========MovieGenerator===========%%
-function movie = MovieGenerator(frameCoorX,frameCoorY,bleachTime,intensity,lateralPrecision,cameraPixelSize,cameraFrameSize,cameraOffset,cameraQE,cameraEMGain,cameraConversionFactor,cameraDarkCurrent,cameraReadOut,numFrames)
+%%==========ImageGenerator===========%%
+function rawImage = ImageGenerator(frameCoorX,frameCoorY,intensity,lateralPrecision,cameraFrameSize)
+
+% initializing
+roiRadius = 5;
 
 % creating kernel
-for xVal = 1 : 11
-    for yVal = 1 : 11
-        kernel(yVal,xVal) = double(exp(-((xVal - 6) ^ 2 + (yVal - 6) ^ 2) /...
-            (2 * ((lateralPrecision / cameraPixelSize) ^ 2))));
+for xVal = 1 : (roiRadius * 2) + 1
+    for yVal = 1 : (roiRadius * 2) + 1
+        kernel(yVal,xVal) = double(exp(-((xVal - (roiRadius + 1)) ^ 2 + (yVal - (roiRadius + 1)) ^ 2) /...
+            (2 * ((lateralPrecision) ^ 2))));
     end
 end
 
-% creating an empty movie array
-movie(:,:,:) = zeros(cameraFrameSize,cameraFrameSize,numFrames);
+% creating an empty image array
+rawImage = zeros(cameraFrameSize,cameraFrameSize);
 
-% adding antibody and label length to frameCoor
-currentframeCoorX = (frameCoorX ./ cameraPixelSize);
-currentframeCoorY = (frameCoorY ./ cameraPixelSize);
+% copying frameCoor to currentFrameCoor for future manipulations
+currentFrameCoorX = frameCoorX;
+currentFrameCoorY = frameCoorY;
 
 % generating gaussian profiles
 for unitId = 1 : size(frameCoorX,2)
-    
+
     % adding kernel to movie
-    xVal = round(currentframeCoorX(unitId)) - 5 : round(currentframeCoorX(unitId)) + 5;
-    yVal = round(currentframeCoorY(unitId)) - 5 : round(currentframeCoorY(unitId)) + 5;
-    movie(yVal,xVal,1:bleachTime(unitId)) = ...
-        movie(yVal,xVal,1:bleachTime(unitId)) + (intensity(unitId) .* repmat(kernel,1,1,bleachTime(unitId)));
+    try
+        xVal = round(currentFrameCoorX(unitId)) - roiRadius : round(currentFrameCoorX(unitId)) + roiRadius;
+        yVal = round(currentFrameCoorY(unitId)) - roiRadius : round(currentFrameCoorY(unitId)) + roiRadius;
+        rawImage(yVal,xVal) = rawImage(yVal,xVal) + intensity(unitId) .* kernel;
+    catch
+    end
 end
 
-% converting photons to electrons
-movie = (movie .* (cameraQE / 100)) + cameraDarkCurrent + cameraReadOut;
-
-% adding noise and offset
-movie = (gamrnd(movie,(cameraEMGain - 1 + (1 ./ movie))) ./ cameraConversionFactor) + cameraOffset;
+% creating noise
+noise = gamrnd(0.15,0.9,cameraFrameSize,cameraFrameSize);
+noise = noise .* (noise <= 1);
+rawImage = rawImage + noise;
 end

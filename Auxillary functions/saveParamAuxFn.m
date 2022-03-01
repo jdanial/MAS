@@ -11,7 +11,6 @@ function saveParamAuxFn(app)
 % registering parameters
 app.param.detection.detect = app.DetectSwitch.Value;
 app.param.detection.maxSigma = app.MaximumSigmaEditField.Value;
-app.param.detection.localize = app.LocalizeCheckBox.Value;
 app.param.detection.roiRadius = app.ROIRadiusEditField.Value;
 app.param.analysis.analyze = app.AnalyzeSwitch.Value;
 app.param.analysis.numSubUnitsPerCalibComplex = app.NumSubUnitsPerCalibComplexEditField.Value;

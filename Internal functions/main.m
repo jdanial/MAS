@@ -12,7 +12,6 @@ app.param.paths.calibrationAndUnknownData = app.CalibrationunknowndataEditField.
 
 % detection parameters - EDITABLE
 app.param.detection.detect = app.DetectSwitch.Value == 'Y';
-app.param.detection.localize = app.LocalizeCheckBox.Value;
 app.param.detection.maxSigma = app.MaximumSigmaEditField.Value;
 app.param.detection.roiRadius = app.ROIRadiusEditField.Value + 1;
 
