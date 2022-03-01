@@ -1,19 +1,15 @@
-# SAS
-SAS is the Stoichiometry Analysis Software. This software was developed for high order subunit counting of biomolecular complexes at the single molecule level acquired using wide-field diffraction-limited microscopy. 
+# MAS
+MAS is the Molecularity Analysis Software. This software was developed for high order molecular counting of nanoscopic complexes with single molecule accuracy from images acquired using confocal, or wide-field, diffraction-limited microscopy. 
 ## Installation
-To install SAS, you will need to install MATLAB 2020a or higher. This version of MATLAB can be downloaded from [here](https://www.mathworks.com/products/matlab.html). Once installed, the following four packages must be installed: signal processing and communications; machine learning and deep learning; maths, statistics and optimization; image processing and computer vision.  
+To install MAS, you will need to install MATLAB 2020a or higher. This version of MATLAB can be downloaded from [here](https://www.mathworks.com/products/matlab.html). Once installed, the following four packages must be installed: signal processing and communications; machine learning and deep learning; maths, statistics and optimization; image processing and computer vision.  
   
 Clone this directory in a folder of your choice on your computer.
 ## Operation
-To operate SAS, double-click the `SAS_vx.mlapp` file. The software will load and a GUI will appear.   
+To operate MAS, double-click the `MAS_vx.mlapp` file. The software will load and a GUI will appear.   
   
-In the `Data path` panel, press the `Select path` button and a dialog will appear. Browse to the folder containing your data. See below for how to format your data for processing using SAS.  
+In the `Data path` panel, press the `Select path` button and a dialog will appear. Browse to the folder containing your data. See below for how to format your data for processing using MAS.  
   
-In the `Detection parameters` panel, flip the `Detect` switch to the `Y` position, insert the pixel size of the detection camera (in nanometers) in the `Camera pixel size` field, insert the quantum efficiency of the detection camera (as percentage) at the emission wavelength of the used fluorophore in the `Camera quantum efficiency` field, insert the offset of the detection camera (in signal units) in the `Camera offset` field, insert the electron multiplication gain of the detection camera (in in electrons / photons) in the `Camera EM gain` field, and a maximum value of the standard deviation in the point spreaf function of the detected particles (in nanometers) in the `Maximum sigma` field. All camera parameters can be obtained from the supplier. 
-  
-In the `Processing parameters` panel, flip the `Process` switch to the `Y` position and insert the radius of the Region Of Interest (ROI) containing each particle (in pixels) in the `ROI radius` field. 
-  
-In the `Annotation parameters` panel, flip the `Annotate` switch to the `Y` position and insert the minimum height of the normalized gradient traces (as percentage) in the `Minimum peak height` field.
+In the `Detection parameters` panel, flip the `Detect` switch to the `Y` position, the radius of the Region Of Interest (ROI) containing each particle (in pixels) in the `ROI radius` field. If needed, check the `Localize and reject` check box and insert a maximum value of the standard deviation in the point spread function of the detected particles (in pixels) in the `Maximum sigma` field. 
   
 In the `Analysis parameters` panel, flip the `Analyze` switch to the `Y` position, insert the efficiency of fluorophore labeling (as percentage) in the `Labeling efficiency` field and the maximum number of gaussians used for fitting the unknown species in the `Maximum Gaussian mixtures` field.  
   
