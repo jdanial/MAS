@@ -109,18 +109,6 @@ for roundId = 1 : 2
 
         %% calling ParticleDetector
         ParticleDetector(app,fileId);
-
-        %% setting up progress
-        app.msgBox.Value = sprintf('%s',['Localizing particles in ' app.data.file(fileId).type ' file ' num2str(fileId) '.']);
-        drawnow;
-
-        ParticleLocalizer(app,fileId);
-
-        %% setting up progress
-        app.msgBox.Value = sprintf('%s',['Rejecting particles in ' app.data.file(fileId).type ' file ' num2str(fileId) '.']);
-        drawnow;
-
-        ParticleRejector(app,fileId);
     end
 
     %% exporting generic .m files
@@ -193,7 +181,7 @@ for tId = 1 : size(app.data.file(fileId).image,1)
     if ~sum(imageRawTemp,'all') == 0
 
         % thresholding image
-        thresholdImage = imregionalmax(imageRawTemp,4);
+        thresholdImage = imregionalmax(imageRawTemp,8);
 
         % extracting connected objects from threshold image
         [centroidTemp_y,centroidTemp_x] = ind2sub(size(thresholdImage),find(thresholdImage == true));
@@ -210,6 +198,26 @@ for tId = 1 : size(app.data.file(fileId).image,1)
                 app.data.file(fileId).time(tId).particle(trueParticlePosCount).state = 'accepted';
                 app.data.file(fileId).time(tId).particle(trueParticlePosCount).centroid.x = centroids(particleId,1);
                 app.data.file(fileId).time(tId).particle(trueParticlePosCount).centroid.y = centroids(particleId,2);
+                background = [];
+                for rowId = round(centroids(particleId,2)) - roiRadius - 1 : round(centroids(particleId,2)) + roiRadius + 1
+                    for colId = round(centroids(particleId,1)) - roiRadius - 1 : round(centroids(particleId,1)) + roiRadius + 1
+                        if (rowId < round(centroids(particleId,2)) - roiRadius || rowId > round(centroids(particleId,2)) + roiRadius) && ...
+                                (colId < round(centroids(particleId,1)) - roiRadius || colId > round(centroids(particleId,1)) + roiRadius)
+                            background = [background imageRaw(rowId,colId)];
+                        end
+                    end
+                end
+                app.data.file(fileId).time(tId).particle(trueParticlePosCount).background = ...
+                    ((((roiRadius * 2) + 1) .^ 2) .* mean(background));
+                app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity = sum(...
+                    imageRaw(round(centroids(particleId,2)) - roiRadius : round(centroids(particleId,2)) + roiRadius,...
+                    round(centroids(particleId,1)) - roiRadius : round(centroids(particleId,1)) + roiRadius),'all');
+                app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity = ...
+                    app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity - ...
+                    app.data.file(fileId).time(tId).particle(trueParticlePosCount).background;
+                if app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity < 0
+                    app.data.file(fileId).time(tId).particle(trueParticlePosCount).state = 'rejected';
+                end
             end
         end
 

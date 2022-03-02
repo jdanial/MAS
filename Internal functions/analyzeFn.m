@@ -203,7 +203,7 @@ saveas(figHandle,fullfile(app.param.paths.calibrationAndUnknownData,...
     'Unknown_molecularity_PDF_combined.png'));
 
 % creating figure (PDF of average molecularity)
-figHandle = figure('visible','off');
+figHandle = figure('visible','on');
 
 % calculating file handle and opening file
 fileHandle = fopen(fullfile(app.param.paths.calibrationAndUnknownData,...
@@ -251,6 +251,8 @@ plot(x,y,'r-');
 hold off;
 xlabel('Time (min)');
 ylabel('Average molecularity');
+pbaspect([2 1 1]);
+box on;
 
 % saving figure
 saveas(figHandle,fullfile(app.param.paths.calibrationAndUnknownData,...
