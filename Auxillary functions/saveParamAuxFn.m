@@ -10,7 +10,9 @@ function saveParamAuxFn(app)
 
 % registering parameters
 app.param.detection.detect = app.DetectSwitch.Value;
-app.param.detection.maxSigma = app.MaximumSigmaEditField.Value;
+app.param.detection.timeLength = app.TSlicesEditField.Value;
+app.param.detection.depths = app.ZSlicesEditField.Value;
+app.param.detection.colors = app.CSlicesEditField.Value;
 app.param.detection.roiRadius = app.ROIRadiusEditField.Value;
 app.param.analysis.analyze = app.AnalyzeSwitch.Value;
 app.param.analysis.numSubUnitsPerCalibComplex = app.NumSubUnitsPerCalibComplexEditField.Value;

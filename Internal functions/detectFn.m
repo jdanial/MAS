@@ -85,7 +85,15 @@ for roundId = 1 : 2
             if ext == ".lsm"
                 image = lsmread(filePath);
             else
-                image(1,1,1,:,:) = imread(filePath);
+                frameId = 1;
+                for tId = 1 : app.param.detection.timeLength
+                    for zId = 1 : app.param.detection.depths
+                        for cId = 1 : app.param.detection.colors
+                            image(tId,cId,zId,:,:) = imread(filePath,frameId);
+                            frameId = frameId + 1;
+                        end
+                    end
+                end
             end
         catch
             returnFlag = true;
@@ -127,20 +135,9 @@ function StackProcessor(app,fileId)
 
 % looping through time
 for tId = 1 : size(app.data.file(fileId).image,1)
-    maxIntensityZId = 1;
-    maxIntensity = 0;
 
-    % looping through depth
-    for zId = 1 : size(app.data.file(fileId).image,3)
-        intensity = std(app.data.file(fileId).image(tId,1,zId,:,:),[],'all');
-        if intensity > maxIntensity
-            maxIntensityZId = zId;
-            maxIntensity = intensity;
-        end
-    end
-
-    % calcuating z frame of max intensity
-    app.data.file(fileId).maxZId.time(tId) = maxIntensityZId;
+    % calculating max projection
+    app.data.file(fileId).time(tId).maxImage = squeeze(max(app.data.file(fileId).image(tId,1,:,:,:)));
 end
 end
 
@@ -154,12 +151,12 @@ roiRadius = app.param.detection.roiRadius;
 for tId = 1 : size(app.data.file(fileId).image,1)
 
     % extracting image
-    imageRaw = int16(squeeze(app.data.file(fileId).image(tId,1,app.data.file(fileId).maxZId.time(tId),:,:)));
+    imageRaw = int16(app.data.file(fileId).time(tId).maxImage);
 
     % checking image type
     if strcmp(app.data.file(fileId).type,'Calibration')
         imageDOG = imageRaw;
-        threshold = 1;
+        threshold = 2;
     else
         sigmaLow = 1;
         sigmaHigh = 2;
@@ -176,6 +173,9 @@ for tId = 1 : size(app.data.file(fileId).image,1)
 
     % segmenting cell image
     imageRawTemp = imageRaw .* int16(imageDOG > threshold);
+
+    % changing to imageRaw to double
+    imageRaw = double(imageRaw);
 
     % checking if image does not have any particles
     if ~sum(imageRawTemp,'all') == 0
@@ -208,14 +208,14 @@ for tId = 1 : size(app.data.file(fileId).image,1)
                     end
                 end
                 app.data.file(fileId).time(tId).particle(trueParticlePosCount).background = ...
-                    ((((roiRadius * 2) + 1) .^ 2) .* mean(background));
+                    mean(background) .* ((roiRadius * 2 + 1) .^ 2);
                 app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity = sum(...
                     imageRaw(round(centroids(particleId,2)) - roiRadius : round(centroids(particleId,2)) + roiRadius,...
                     round(centroids(particleId,1)) - roiRadius : round(centroids(particleId,1)) + roiRadius),'all');
                 app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity = ...
                     app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity - ...
                     app.data.file(fileId).time(tId).particle(trueParticlePosCount).background;
-                if app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity < 0
+                if app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity <= 0
                     app.data.file(fileId).time(tId).particle(trueParticlePosCount).state = 'rejected';
                 end
             end
@@ -227,7 +227,7 @@ for tId = 1 : size(app.data.file(fileId).image,1)
                 maxParticleIntensityZId = 1;
                 maxParticleIntensity = 0;
                 for zId = 1 : size(app.data.file(fileId).image,3)
-                    particleIntensityZId = sum(app.data.file(fileId).image(tId,1,zId,...
+                    particleIntensityZId = mean(app.data.file(fileId).image(tId,1,zId,...
                         app.data.file(fileId).time(tId).particle(particleId).centroid.y - roiRadius : ...
                         app.data.file(fileId).time(tId).particle(particleId).centroid.y + roiRadius,...
                         app.data.file(fileId).time(tId).particle(particleId).centroid.x - roiRadius : ...
@@ -243,38 +243,6 @@ for tId = 1 : size(app.data.file(fileId).image,1)
                 end
             end
         end
-    end
-end
-end
-
-%%====================ParticleLocalizer=====================%%
-function ParticleLocalizer(app,fileId)
-
-% looping through time
-for tId = 1 : length(app.data.file(fileId).time)
-
-    % extracting number of particles
-    numParticles = length(app.data.file(fileId).time(tId).particle);
-
-    % calling particleLocalizerAuxFn
-    if numParticles > 0
-        particleLocalizerAuxFn(app,fileId);
-    end
-end
-end
-
-%%====================ParticleRejector=====================%%
-function ParticleRejector(app,fileId)
-
-% looping through time
-for tId = 1 : length(app.data.file(fileId).time)
-
-    % extracting number of particles
-    numParticles = length(app.data.file(fileId).time(tId).particle);
-
-    % calling particleRejectorAuxFn
-    if numParticles > 0
-        particleRejectorAuxFn(app,fileId);
     end
 end
 end
@@ -300,7 +268,7 @@ for fileId = 1 : numFiles
             numParticles = length(app.data.file(fileId).time(tId).particle);
 
             % extracting image
-            image = uint16(squeeze(app.data.file(fileId).image(tId,1,app.data.file(fileId).maxZId.time(tId),:,:)));
+            image = uint16(app.data.file(fileId).time(tId).maxImage);
 
             % calculating ROI intensity
             roiInt = max(image(:));

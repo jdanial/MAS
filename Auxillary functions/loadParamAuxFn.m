@@ -33,7 +33,9 @@ app.param = paramTemp.param;
 
 % listing parameters
 app.DetectSwitch.Value = app.param.detection.detect;
-app.MaximumSigmaEditField.Value = app.param.detection.maxSigma;
+app.TSlicesEditField.Value = app.param.detection.timeLength;
+app.ZSlicesEditField.Value = app.param.detection.depths;
+app.CSlicesEditField.Value = app.param.detection.colors;
 app.ROIRadiusEditField.Value = app.param.detection.roiRadius;
 app.AnalyzeSwitch.Value = app.param.analysis.analyze;
 app.NumSubUnitsPerCalibComplexEditField.Value = app.param.analysis.numSubUnitsPerCalibComplex;
