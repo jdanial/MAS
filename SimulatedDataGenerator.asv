@@ -10,10 +10,10 @@ path = uigetdir;
 cameraFrameSize = 1000;
 
 %% sample parameters - EDITABLE
-stoichiometry = [500 500 500 500 500];
+stoichiometry = [200];
 numStructures = sum(stoichiometry);
-sampleType = 'Unknown';
-lateralPrecision = 1.5;
+sampleType = 'Calibration';
+lateralPrecision = 2;
 
 %% calling FrameGenerator
 [frameCoorX,frameCoorY,intensity] = FrameGenerator(numStructures,stoichiometry,cameraFrameSize,sampleType);
@@ -92,7 +92,7 @@ p_twos = 51 / (33247 + 6702 + 51);
 noiseVec = [0 * ones(p_zeros * cameraFrameSize * cameraFrameSize,1); ...
     1 * ones(p_ones * cameraFrameSize * cameraFrameSize,1);...
     2 * ones(ceil(p_twos * cameraFrameSize * cameraFrameSize),1)];
-noiseVec = noiseVec(end - (cameraFrameSize * cameraFrameSize) + 1:end);
+noiseVec = noiseVec(end - (cameraFrameSize * cameraFrameSize) + 1);
 noiseVec = noiseVec(randperm(length(noiseVec)));
 noiseMat = reshape(noiseVec,[cameraFrameSize,cameraFrameSize]);
 rawImage = rawImage + noiseMat;

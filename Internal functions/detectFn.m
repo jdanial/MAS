@@ -136,8 +136,13 @@ function StackProcessor(app,fileId)
 % looping through time
 for tId = 1 : size(app.data.file(fileId).image,1)
 
-    % calculating max projection
-    app.data.file(fileId).time(tId).maxImage = squeeze(max(app.data.file(fileId).image(tId,1,:,:,:)));
+    if app.param.detection.depths > 1
+        
+        % calculating max projection
+        app.data.file(fileId).time(tId).maxImage = squeeze(max(app.data.file(fileId).image(tId,1,:,:,:)));
+    else
+        app.data.file(fileId).time(tId).maxImage = squeeze(app.data.file(fileId).image(tId,1,:,:,:));
+    end
 end
 end
 
@@ -208,10 +213,10 @@ for tId = 1 : size(app.data.file(fileId).image,1)
                     end
                 end
                 app.data.file(fileId).time(tId).particle(trueParticlePosCount).background = ...
-                    mean(background) .* ((roiRadius * 2 + 1) .^ 2);
-                app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity = sum(...
+                    max(background);
+                app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity = max(...
                     imageRaw(round(centroids(particleId,2)) - roiRadius : round(centroids(particleId,2)) + roiRadius,...
-                    round(centroids(particleId,1)) - roiRadius : round(centroids(particleId,1)) + roiRadius),'all');
+                    round(centroids(particleId,1)) - roiRadius : round(centroids(particleId,1)) + roiRadius),[],'all');
                 app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity = ...
                     app.data.file(fileId).time(tId).particle(trueParticlePosCount).intensity - ...
                     app.data.file(fileId).time(tId).particle(trueParticlePosCount).background;

@@ -71,7 +71,7 @@ for fileId = 1 : numFiles
         % looping through time
         for tId = 1 : app.param.detection.timeLength
             intUnknownTemp = [];
-            
+
             % extracting number of particles
             numParticles = length(app.data.file(fileId).time(tId).particle);
 
@@ -131,28 +131,31 @@ for tId = 1 : app.param.detection.timeLength
     app.data.curve.time(tId).x_unknown = x_unknown;
 end
 
-% calculating average and std molecularity 
+% calculating average and std molecularity
 for fileId = 1 : numFiles
     if strcmp(app.data.file(fileId).type,'Unknown')
         for tId = 1 : app.param.detection.timeLength
-            [weights,vals] = hist(app.data.file(fileId).molecularity.time(tId).index,unique(app.data.file(fileId).molecularity.time(tId).index));
-            [freqs,freqVals] = ecdf(app.data.file(fileId).molecularity.time(tId).index);
-            fitFunc = fittype('-exp(-x/a) + 1');
-            fitParam = fit(freqVals,freqs,fitFunc,'StartPoint',100);
-            app.data.file(fileId).molecularity.time(tId).mean = mean(app.data.file(fileId).molecularity.time(tId).index);
-            app.data.file(fileId).molecularity.time(tId).median = median(app.data.file(fileId).molecularity.time(tId).index);
-            app.data.file(fileId).molecularity.time(tId).wMean = sum((weights ./ sum(weights)) .* vals);
-            app.data.file(fileId).molecularity.time(tId).eMean = fitParam.a;
             try
-                app.data.molecularity.time(tId).meanTemp = [app.data.molecularity.time(tId).meanTemp app.data.file(fileId).molecularity.time(tId).mean];
-                app.data.molecularity.time(tId).medianTemp = [app.data.molecularity.time(tId).medianTemp app.data.file(fileId).molecularity.time(tId).median];
-                app.data.molecularity.time(tId).wMeanTemp = [app.data.molecularity.time(tId).wMeanTemp app.data.file(fileId).molecularity.time(tId).wMean];
-                app.data.molecularity.time(tId).eMeanTemp = [app.data.molecularity.time(tId).eMeanTemp app.data.file(fileId).molecularity.time(tId).eMean];
+                [weights,vals] = hist(app.data.file(fileId).molecularity.time(tId).index,unique(app.data.file(fileId).molecularity.time(tId).index));
+                [freqs,freqVals] = ecdf(app.data.file(fileId).molecularity.time(tId).index);
+                fitFunc = fittype('-exp(-x/a) + 1');
+                fitParam = fit(freqVals,freqs,fitFunc,'StartPoint',100);
+                app.data.file(fileId).molecularity.time(tId).mean = mean(app.data.file(fileId).molecularity.time(tId).index);
+                app.data.file(fileId).molecularity.time(tId).median = median(app.data.file(fileId).molecularity.time(tId).index);
+                app.data.file(fileId).molecularity.time(tId).wMean = sum((weights ./ sum(weights)) .* vals);
+                app.data.file(fileId).molecularity.time(tId).eMean = fitParam.a;
+                try
+                    app.data.molecularity.time(tId).meanTemp = [app.data.molecularity.time(tId).meanTemp app.data.file(fileId).molecularity.time(tId).mean];
+                    app.data.molecularity.time(tId).medianTemp = [app.data.molecularity.time(tId).medianTemp app.data.file(fileId).molecularity.time(tId).median];
+                    app.data.molecularity.time(tId).wMeanTemp = [app.data.molecularity.time(tId).wMeanTemp app.data.file(fileId).molecularity.time(tId).wMean];
+                    app.data.molecularity.time(tId).eMeanTemp = [app.data.molecularity.time(tId).eMeanTemp app.data.file(fileId).molecularity.time(tId).eMean];
+                catch
+                    app.data.molecularity.time(tId).meanTemp = app.data.file(fileId).molecularity.time(tId).mean;
+                    app.data.molecularity.time(tId).medianTemp = app.data.file(fileId).molecularity.time(tId).median;
+                    app.data.molecularity.time(tId).wMeanTemp = app.data.file(fileId).molecularity.time(tId).wMean;
+                    app.data.molecularity.time(tId).eMeanTemp = app.data.file(fileId).molecularity.time(tId).eMean;
+                end
             catch
-                app.data.molecularity.time(tId).meanTemp = app.data.file(fileId).molecularity.time(tId).mean;
-                app.data.molecularity.time(tId).medianTemp = app.data.file(fileId).molecularity.time(tId).median;
-                app.data.molecularity.time(tId).wMeanTemp = app.data.file(fileId).molecularity.time(tId).wMean;
-                app.data.molecularity.time(tId).eMeanTemp = app.data.file(fileId).molecularity.time(tId).eMean;
             end
         end
     end
@@ -252,40 +255,42 @@ end
 fclose(fileHandle);
 
 % looping through time
-xConf = [];
-yConf = [];
-x = [];
-y = [];
-for tId = 2 : app.param.detection.timeLength
-    if ~isnan(app.data.molecularity.time(tId).mean)
-        y = [y app.data.molecularity.time(tId).mean];
-        yConf = [yConf app.data.molecularity.time(tId).mean + app.data.molecularity.time(tId).sd];
-        x = [x (tId - 1) * app.param.analysis.timeSlice];
-        xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+try
+    xConf = [];
+    yConf = [];
+    x = [];
+    y = [];
+    for tId = 2 : app.param.detection.timeLength
+        if ~isnan(app.data.molecularity.time(tId).mean)
+            y = [y app.data.molecularity.time(tId).mean];
+            yConf = [yConf app.data.molecularity.time(tId).mean + app.data.molecularity.time(tId).sd];
+            x = [x (tId - 1) * app.param.analysis.timeSlice];
+            xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+        end
     end
-end
-for tId = app.param.detection.timeLength : - 1 : 2 
-    if ~isnan(app.data.molecularity.time(tId).mean)
-        yConf = [yConf app.data.molecularity.time(tId).mean - app.data.molecularity.time(tId).sd];
-        xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+    for tId = app.param.detection.timeLength : - 1 : 2
+        if ~isnan(app.data.molecularity.time(tId).mean)
+            yConf = [yConf app.data.molecularity.time(tId).mean - app.data.molecularity.time(tId).sd];
+            xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+        end
     end
+    sdInt = fill(xConf,yConf,'red');
+    sdInt.FaceColor = [1 0.8 0.8];
+    sdInt.EdgeColor = 'none';
+    hold on;
+    plot(x,y,'r-');
+    hold off;
+    xlabel('Time (min)');
+    ylabel('Mean molecularity');
+    pbaspect([1 1 1]);
+    box on;
+
+    % saving figure
+    saveas(figHandle,fullfile(app.param.paths.calibrationAndUnknownData,...
+        'analysis',...
+        'Unknown_molecularity_mean.png'));
+catch
 end
-sdInt = fill(xConf,yConf,'red');
-sdInt.FaceColor = [1 0.8 0.8];      
-sdInt.EdgeColor = 'none';
-hold on;
-plot(x,y,'r-');
-hold off;
-xlabel('Time (min)');
-ylabel('Mean molecularity');
-pbaspect([1 1 1]);
-box on;
-
-% saving figure
-saveas(figHandle,fullfile(app.param.paths.calibrationAndUnknownData,...
-    'analysis',...
-    'Unknown_molecularity_mean.png'));
-
 
 
 % calculating file handle and opening file
@@ -308,39 +313,42 @@ end
 fclose(fileHandle);
 
 % looping through time
-xConf = [];
-yConf = [];
-x = [];
-y = [];
-for tId = 2 : app.param.detection.timeLength
-    if ~isnan(app.data.molecularity.time(tId).median)
-        y = [y app.data.molecularity.time(tId).median];
-        yConf = [yConf app.data.molecularity.time(tId).median + app.data.molecularity.time(tId).sd];
-        x = [x (tId - 1) * app.param.analysis.timeSlice];
-        xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+try
+    xConf = [];
+    yConf = [];
+    x = [];
+    y = [];
+    for tId = 2 : app.param.detection.timeLength
+        if ~isnan(app.data.molecularity.time(tId).median)
+            y = [y app.data.molecularity.time(tId).median];
+            yConf = [yConf app.data.molecularity.time(tId).median + app.data.molecularity.time(tId).sd];
+            x = [x (tId - 1) * app.param.analysis.timeSlice];
+            xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+        end
     end
-end
-for tId = app.param.detection.timeLength : - 1 : 2 
-    if ~isnan(app.data.molecularity.time(tId).median)
-        yConf = [yConf app.data.molecularity.time(tId).median - app.data.molecularity.time(tId).sd];
-        xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+    for tId = app.param.detection.timeLength : - 1 : 2
+        if ~isnan(app.data.molecularity.time(tId).median)
+            yConf = [yConf app.data.molecularity.time(tId).median - app.data.molecularity.time(tId).sd];
+            xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+        end
     end
-end
-sdInt = fill(xConf,yConf,'red');
-sdInt.FaceColor = [1 0.8 0.8];      
-sdInt.EdgeColor = 'none';
-hold on;
-plot(x,y,'r-');
-hold off;
-xlabel('Time (min)');
-ylabel('Median molecularity');
-pbaspect([1 1 1]);
-box on;
+    sdInt = fill(xConf,yConf,'red');
+    sdInt.FaceColor = [1 0.8 0.8];
+    sdInt.EdgeColor = 'none';
+    hold on;
+    plot(x,y,'r-');
+    hold off;
+    xlabel('Time (min)');
+    ylabel('Median molecularity');
+    pbaspect([1 1 1]);
+    box on;
 
-% saving figure
-saveas(figHandle,fullfile(app.param.paths.calibrationAndUnknownData,...
-    'analysis',...
-    'Unknown_molecularity_median.png'));
+    % saving figure
+    saveas(figHandle,fullfile(app.param.paths.calibrationAndUnknownData,...
+        'analysis',...
+        'Unknown_molecularity_median.png'));
+catch
+end
 
 
 
@@ -364,41 +372,42 @@ end
 fclose(fileHandle);
 
 % looping through time
-xConf = [];
-yConf = [];
-x = [];
-y = [];
-for tId = 2 : app.param.detection.timeLength
-    if ~isnan(app.data.molecularity.time(tId).wMean)
-        y = [y app.data.molecularity.time(tId).wMean];
-        yConf = [yConf app.data.molecularity.time(tId).wMean + app.data.molecularity.time(tId).wSd];
-        x = [x (tId - 1) * app.param.analysis.timeSlice];
-        xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+try
+    xConf = [];
+    yConf = [];
+    x = [];
+    y = [];
+    for tId = 2 : app.param.detection.timeLength
+        if ~isnan(app.data.molecularity.time(tId).wMean)
+            y = [y app.data.molecularity.time(tId).wMean];
+            yConf = [yConf app.data.molecularity.time(tId).wMean + app.data.molecularity.time(tId).wSd];
+            x = [x (tId - 1) * app.param.analysis.timeSlice];
+            xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+        end
     end
-end
-for tId = app.param.detection.timeLength : - 1 : 2 
-    if ~isnan(app.data.molecularity.time(tId).wMean)
-        yConf = [yConf app.data.molecularity.time(tId).wMean - app.data.molecularity.time(tId).wSd];
-        xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+    for tId = app.param.detection.timeLength : - 1 : 2
+        if ~isnan(app.data.molecularity.time(tId).wMean)
+            yConf = [yConf app.data.molecularity.time(tId).wMean - app.data.molecularity.time(tId).wSd];
+            xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+        end
     end
+    sdInt = fill(xConf,yConf,'red');
+    sdInt.FaceColor = [1 0.8 0.8];
+    sdInt.EdgeColor = 'none';
+    hold on;
+    plot(x,y,'r-');
+    hold off;
+    xlabel('Time (min)');
+    ylabel('Weighted mean molecularity');
+    pbaspect([1 1 1]);
+    box on;
+
+    % saving figure
+    saveas(figHandle,fullfile(app.param.paths.calibrationAndUnknownData,...
+        'analysis',...
+        'Unknown_molecularity_weighted_mean.png'));
+catch
 end
-sdInt = fill(xConf,yConf,'red');
-sdInt.FaceColor = [1 0.8 0.8];      
-sdInt.EdgeColor = 'none';
-hold on;
-plot(x,y,'r-');
-hold off;
-xlabel('Time (min)');
-ylabel('Weighted mean molecularity');
-pbaspect([1 1 1]);
-box on;
-
-% saving figure
-saveas(figHandle,fullfile(app.param.paths.calibrationAndUnknownData,...
-    'analysis',...
-    'Unknown_molecularity_weighted_mean.png'));
-
-
 
 % calculating file handle and opening file
 fileHandle = fopen(fullfile(app.param.paths.calibrationAndUnknownData,...
@@ -420,40 +429,42 @@ end
 fclose(fileHandle);
 
 % looping through time
-xConf = [];
-yConf = [];
-x = [];
-y = [];
-for tId = 2 : app.param.detection.timeLength
-    if ~isnan(app.data.molecularity.time(tId).eMean)
-        y = [y app.data.molecularity.time(tId).eMean];
-        yConf = [yConf app.data.molecularity.time(tId).eMean + app.data.molecularity.time(tId).eSd];
-        x = [x (tId - 1) * app.param.analysis.timeSlice];
-        xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+try
+    xConf = [];
+    yConf = [];
+    x = [];
+    y = [];
+    for tId = 2 : app.param.detection.timeLength
+        if ~isnan(app.data.molecularity.time(tId).eMean)
+            y = [y app.data.molecularity.time(tId).eMean];
+            yConf = [yConf app.data.molecularity.time(tId).eMean + app.data.molecularity.time(tId).eSd];
+            x = [x (tId - 1) * app.param.analysis.timeSlice];
+            xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+        end
     end
-end
-for tId = app.param.detection.timeLength : - 1 : 2 
-    if ~isnan(app.data.molecularity.time(tId).eMean)
-        yConf = [yConf app.data.molecularity.time(tId).eMean - app.data.molecularity.time(tId).eSd];
-        xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+    for tId = app.param.detection.timeLength : - 1 : 2
+        if ~isnan(app.data.molecularity.time(tId).eMean)
+            yConf = [yConf app.data.molecularity.time(tId).eMean - app.data.molecularity.time(tId).eSd];
+            xConf = [xConf (tId - 1) * app.param.analysis.timeSlice];
+        end
     end
+    sdInt = fill(xConf,yConf,'red');
+    sdInt.FaceColor = [1 0.8 0.8];
+    sdInt.EdgeColor = 'none';
+    hold on;
+    plot(x,y,'r-');
+    hold off;
+    xlabel('Time (min)');
+    ylabel('Emperical mean molecularity');
+    pbaspect([1 1 1]);
+    box on;
+
+    % saving figure
+    saveas(figHandle,fullfile(app.param.paths.calibrationAndUnknownData,...
+        'analysis',...
+        'Unknown_molecularity_emperical_mean.png'));
+catch
 end
-sdInt = fill(xConf,yConf,'red');
-sdInt.FaceColor = [1 0.8 0.8];      
-sdInt.EdgeColor = 'none';
-hold on;
-plot(x,y,'r-');
-hold off;
-xlabel('Time (min)');
-ylabel('Emperical mean molecularity');
-pbaspect([1 1 1]);
-box on;
-
-% saving figure
-saveas(figHandle,fullfile(app.param.paths.calibrationAndUnknownData,...
-    'analysis',...
-    'Unknown_molecularity_emperical_mean.png'));
-
 
 
 % looping through time
