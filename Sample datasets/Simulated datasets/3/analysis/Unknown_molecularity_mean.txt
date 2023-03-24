@@ -1,0 +1,2 @@
+Time (min)	Mean molecularity	Std molecularity
+0	1.123956e+02	0

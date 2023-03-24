@@ -1,0 +1,1 @@
+Time (min)	Weighted mean molecularity	Std molecularity

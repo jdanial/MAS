@@ -1,0 +1,2 @@
+Time (min)	Median molecularity	Std molecularity
+0	111	0

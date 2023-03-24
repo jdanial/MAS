@@ -1,0 +1,1 @@
+Time (min)	Emperical mean molecularity	Std molecularity
